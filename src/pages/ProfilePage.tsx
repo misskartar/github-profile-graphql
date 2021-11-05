@@ -1,20 +1,58 @@
-import React from "react";
-import { Container, Box, Stack, Avatar, Heading, Text, Link } from "@chakra-ui/react";
+import React, { useState } from "react";
+import {
+  Container,
+  Box,
+  Stack,
+  Avatar,
+  Heading,
+  Text,
+  Link,
+  Spinner
+} from "@chakra-ui/react";
 import { InfoIcon, TriangleUpIcon, AtSignIcon } from "@chakra-ui/icons";
+import { gql } from "@apollo/client";
+import { client } from "..";
 
-const dummyData = {
-  name: "Kartar",
-  username: "misskartar",
-  bio: "Software Engineer @MissGuided React Native.",
-  company: "Missguided",
-  location: "Notts",
-  twitter: {
-    username: "kartarjabanda",
-    link: 'https://twitter.com/kartarjabanda'
-  }
-};
+interface GithubData {
+  login: string,
+  name?: string,
+  username: string,
+  bio?: string,
+  company?: string,
+  location?: string,
+  twitterUsername?: string
+}
 
 const ProfilePage = () => {
+  const [githubData, setGithubData] = useState<GithubData | undefined>()
+
+  client
+    .query({
+      query: gql`
+        query {
+          viewer {
+            login
+            name
+            bio
+            company
+            location
+            twitterUsername
+          }
+        }
+      `,
+    })
+    .then((result) => setGithubData(result.data.viewer));
+
+  // const { login, name, bio, company, location, twitterUsername } = githubData;
+
+  if (!githubData) {
+    return (
+      <Container centerContent>
+        <Spinner />
+      </Container>
+    )
+  }
+
   return (
     <Container maxW="container.md" centerContent>
       <Box
@@ -26,25 +64,25 @@ const ProfilePage = () => {
       >
         <Stack direction="row" justifyContent="space-between" marginBottom="3">
           <Box>
-            <Heading size="lg">{dummyData.name}</Heading>
-            <Text marginBottom="2">@{dummyData.username}</Text>
-            <Text>{dummyData.bio}</Text>
+            <Heading size="lg">{githubData.name}</Heading>
+            <Text marginBottom="2">@{githubData.login}</Text>
+            <Text>{githubData.bio}</Text>
           </Box>
           <Avatar src="https://bit.ly/broken-link" />
         </Stack>
 
         <Stack direction="row" alignItems="center">
           <InfoIcon />
-          <Text>{dummyData.company}</Text>
+          <Text>{githubData.company}</Text>
         </Stack>
         <Stack direction="row" alignItems="center">
           <TriangleUpIcon />
-          <Text>{dummyData.location}</Text>
+          <Text>{githubData.location}</Text>
         </Stack>
         <Stack direction="row" alignItems="center">
           <AtSignIcon />
-          <Link href={dummyData.twitter.link} target='_blank'>
-            <Text>{dummyData.twitter.username}</Text>
+          <Link href={`https://twitter.com/${githubData.twitterUsername}`} target="_blank">
+            <Text>{githubData.twitterUsername}</Text>
           </Link>
         </Stack>
       </Box>
